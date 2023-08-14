@@ -1,0 +1,11 @@
+/* CL PROGRAM TO COPY DATA FROM RESULT.TXT TO AS400 LIBRARY */       
+                                                                     
+             PGM        PARM(&PATH)                                  
+                                                                     
+/* COPY DATA FROM IFS TO A LIBRARY */                                
+CPYFRMSTMF FROMSTMF('+PATH/RESULT.TXT') +                            
+            TOMBR('/QSYS.LIB/YOURLIB.LIB/RESULT.FILE/RESULT.MBR') +  
+            MBROPT(*REPLACE) STMFCCSID(*PCASCII) DBFCCSID(37)        
+                                                                     
+/* END THE PROGRAM */                                                
+ENDPGM                                                               

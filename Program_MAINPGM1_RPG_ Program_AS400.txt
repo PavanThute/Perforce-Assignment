@@ -1,0 +1,64 @@
+FHomeScreenCF   e             workstn sfile(sdata:Rrn1)      
+FResult    IF   E             Disk                           
+DRrn1             S              4  0                        
+C     Plist1        Plist                                    
+C                   Parm                    Sdir             
+C                   Parm                    Sftype           
+C                   Parm                    SText            
+                                                             
+C                   Exsr      MainSr                         
+C                   Exsr      ResultSr                       
+C                   Eval      *Inlr = '1'                    
+                                                             
+C     MainSr        Begsr                                    
+C                   Exfmt     S1                             
+                                                             
+C                   Dow       *In03 = '1'                    
+                                                                       
+C                   If        SDIR = ' ' or SFTYPE = ' ' or            
+C                             STEXT = ' '                              
+C                   Eval      SErrMsg = 'Please enter all required data
+C                   Endif                                              
+                                                                       
+C                   If        SErrMsg = ' '                            
+C                   Exsr      CallCPgmSr                               
+C                   Endif                                              
+                                                                       
+C                   Exfmt     S1                                       
+C                   Enddo                                              
+                                                                       
+C                   Endsr                                              
+                                                                       
+C     CallCPgmSr    Begsr                                              
+C                   Call      'CPGM1'       Plist1       
+C                   Exsr      Resultsr                   
+C                   Endsr                                
+                                                         
+C     ResultSr      Begsr                                
+C                   Exsr      Loadsr                     
+C                   Exsr      Displysr                   
+C                   Endsr                                
+                                                         
+C     Loadsr        Begsr                                
+C     1             setll     r1                         
+C                   Read      r1                         
+                                                         
+C                   Dow       not %eof(result)           
+C                   Eval      rrn1 = rrn1 +1             
+C                   Eval      sfilename = filename       
+C                   write     Sdata                      
+C                   Read      r1                         
+C                   Enddo                                
+                                                         
+C                   Endsr                                
+                                                         
+C     Displysr      Begsr                                
+C                   Eval      *in70 = '1'                
+                                                         
+C                   If        rrn1 > 0                   
+C                   Eval      *in71 = '1'                
+C                   endif                                
+                                                         
+C                   Write     Sfooter                    
+C                   Exfmt     Sctl                       
+C                   Endsr                                                                                         
