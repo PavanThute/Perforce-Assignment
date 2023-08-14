@@ -1,0 +1,141 @@
+//****************************************************************************
+// - Program receive directory name, file type filter and regex filter 
+// - Open directory and scan each dir and inside files
+// - Read Data from file and search using strstr function in each record
+// - if any 1 record is matching with regex filter text then return file name
+//   to calling RPG program which will then display result on AS400 screen.
+// - Regex search  (find matching string anywhere in file) is performed 
+//   without using REGEX.h functionality
+//****************************************************************************
+
+#include<stdio.h>
+#include<string.h>
+#include<dirent.h>
+#include<sys/stat.h>
+#include<sys/types.h>
+
+int counter = 0;
+
+//****************************************************************************
+// Function : clear_result_file_data
+// Purpose  : If result file is already exist then this function will clear it
+//****************************************************************************
+int clear_result_file_data()
+{
+  FILE *outputfile = NULL;
+  outputfile = fopen("result.txt", "w");
+  fclose(outputfile);  
+}
+
+//****************************************************************************
+// Function : scanfile
+// Purpose  : Read data from file and scan against provided user regex filter
+//****************************************************************************
+int scanfile(char filename[],char filterdata[])
+   {
+    char *search = NULL,*endoffile = NULL;
+    FILE *fileptr = NULL, *outputfile = NULL;
+    char record[256];
+    fileptr = fopen(filename, "r");
+
+    if (fileptr != NULL)
+       {
+        // fetch 1st record of file
+           endoffile = fgets(record, sizeof(record), fileptr);
+    
+           while(endoffile != NULL)
+              {
+               // Search/scan specific word in the record without using REGEX functions
+                  search = strstr(record, filterdata);
+
+                  if(search != NULL)
+                    {
+                      outputfile = fopen("result.txt", "a");
+
+                      if (outputfile == NULL) 
+                         {
+                            perror("Error opening file");
+                            // return 1; // Exit with an error code
+                         }
+
+                      if (counter == 0)
+                      {  
+                         fprintf(outputfile, "%s", filename);   
+                      }
+
+                      else
+                      {
+                           fprintf(outputfile, "\n%s", filename);
+                      }
+
+                      counter++;
+                      fclose(outputfile);
+                      //printf("\n Match found %s - %s",filterdata,filename);
+                      break;            
+                    }
+                  endoffile = fgets(record, sizeof(record), fileptr);
+              }
+
+         fclose(fileptr);
+        
+        }
+   }
+//****************************************************************************
+// Function : scanDir
+// Purpose  : Read data from file and scan against provided user regex filter
+//****************************************************************************
+int scanDir(char *dirname,char *fileext,char *regex_usr)
+{ 
+  struct dirent *object;
+  DIR *directorypath = opendir(dirname);
+  if (directorypath == NULL)
+    {
+      //printf("\n Error: Directory not found");
+      return(1);
+    }
+
+  while ((object = readdir(directorypath))) 
+    {   
+        char filepath[256];
+        snprintf(filepath, sizeof(filepath), "%s/%s", dirname, object->d_name);
+        struct stat fileInfo; 
+        int status = stat(filepath, &fileInfo);
+
+        if (status != 0) 
+           { 
+              return 1;
+           }
+
+        // Get all types of file from directory or sub-directory and check
+        // file extention against user provided filter.
+
+         if (S_ISREG(fileInfo.st_mode) && (strstr(filepath,fileext) !=NULL))
+              { 
+                // Check file data against user regex filter
+                scanfile(filepath,regex_usr);
+              }
+
+        // if object is another directory the recusively call function
+         else if (S_ISDIR(fileInfo.st_mode) &&      
+                  strcmp(object->d_name, ".") != 0 && 
+                  strcmp(object->d_name, "..") != 0) 
+              { 
+                   //printf("\n found dir\n");                
+                   scanDir(filepath,fileext,regex_usr);
+                   //closedir(directorypath);
+              }       
+    }
+}
+
+//****************************************************************************
+// Function : Main
+// Purpose  : Clear garbage data from result file and process new request
+//****************************************************************************
+void main(int argc, char *argv[])
+     { 
+      char *dirname = argv[1];
+      char *fileext = argv[2];
+      char *regex_usr = argv[3];
+      clear_result_file_data();
+      scanDir(dirname,fileext,regex_usr);
+     } 
